@@ -29,7 +29,7 @@ const userSchema = new Schema(
             type: String,//cloudinary url
             require : true
         },
-        covverImage:{
+        coverImage:{
             type:String,
         },
         watchHistory:[
@@ -40,7 +40,7 @@ const userSchema = new Schema(
         ],
         password:{
             type:String,
-            required : [true,'passord id required']
+            required : [true,'password id required']
         },
         refreshToken:{
             type:String
@@ -56,12 +56,12 @@ const userSchema = new Schema(
 userSchema.pre("save", async function (next){
     if(!this.isModified("password")) return next();
 
-    this.password = bcrypt.hash(this.password,10)
+    this.password = await bcrypt.hash(this.password,10)
     next()
 })
 
-userSchema.methods.isPasswordCorrect = async function (passord) {
-    return await bcrypt.compare(passord,this.passord)
+userSchema.methods.isPasswordCorrect = async function (password) {
+    return await bcrypt.compare(password,this.password)
 }
 
 userSchema.methods.generateAccessToken  = function (){
