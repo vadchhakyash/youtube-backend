@@ -260,7 +260,11 @@ const changeCurrentUserPassword = asyncHandler(async(req,res)=>{
 const getCurrentUser = asyncHandler(async(req,res)=>{
     return res
     .status(200)
-    .json(200,req.user,"current user fetched successfully")
+    .json(new ApiResponse(
+        200,
+        req.user,
+        "current user fetched successfully"
+    ))
 })
 
 const updateAccountDetails = asyncHandler(async(req,res)=>{
@@ -270,7 +274,7 @@ const updateAccountDetails = asyncHandler(async(req,res)=>{
        throw new ApiError(400,"All fields are required") 
     }
 
-    const user = User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set:{
@@ -298,15 +302,22 @@ const updateUserAvatar = asyncHandler(async (req,res)=>{
 
     const avatar = await uploadOnCloudinary(avatarLocalPath)
 
-    if(!avatar.url){
+    if(!avatar.url || !avatar.public_id){
         throw new ApiError(400,"Error while uploading on avatar")
+    }
+
+    if(req.user?.avatarId){
+        await cloudinary.uploader.destroy(req.user.avatarId).catch((err)=>{
+            console.error("Failed to delete old avatar:",err.message);
+        })
     }
       
    const user  =  await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set:{
-                avatar:avatar.url
+                avatar:avatar.url,
+                avatarId:avatar.public_id
             }
         },
         {new:true}
@@ -352,7 +363,7 @@ const updateUserCoverImage = asyncHandler(async (req,res)=>{
 
 
 })
-
+ 
 export {
     registerUser,
     loginUser,
@@ -363,4 +374,4 @@ export {
     updateAccountDetails,
     updateUserAvatar,
     updateUserCoverImage
-}
+}                                                                                     
