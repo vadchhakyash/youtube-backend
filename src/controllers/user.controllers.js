@@ -341,15 +341,22 @@ const updateUserCoverImage = asyncHandler(async (req,res)=>{
 
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
-    if(!coverImage.url){
+    if(!coverImage.url || !coverImage.public_id){
         throw new ApiError(400,"Error while uploading on coverImage")
+    }
+
+    if(req.user?.coverImageId){
+        await cloudinary.uploader.destroy(req.user.coverImageId).catch((err)=>{
+            console.error("Failed to delete old coverImage:",err.message);
+        })
     }
       
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set:{
-                coverImage:coverImage.url
+                coverImage:coverImage.url,
+                coverImageId:coverImage.public_id
             }
         },
         {new:true}
